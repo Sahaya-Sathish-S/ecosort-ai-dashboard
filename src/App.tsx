@@ -3,8 +3,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppLayout from "@/components/AppLayout";
 import HomePage from "@/pages/HomePage";
+import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import MonitoringPage from "@/pages/MonitoringPage";
 import DetectionPage from "@/pages/DetectionPage";
@@ -23,20 +26,29 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/monitoring" element={<MonitoringPage />} />
-            <Route path="/detection" element={<DetectionPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/awareness" element={<AwarenessPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/monitoring" element={<MonitoringPage />} />
+                    <Route path="/detection" element={<DetectionPage />} />
+                    <Route path="/analytics" element={<AnalyticsPage />} />
+                    <Route path="/map" element={<MapPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
+                    <Route path="/awareness" element={<AwarenessPage />} />
+                    <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </AppLayout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </AppLayout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

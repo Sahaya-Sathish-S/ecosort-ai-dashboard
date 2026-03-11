@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Brain, BarChart3, Trash2, Leaf, ArrowRight, Zap, Eye, Recycle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CameraDetection } from "@/components/CameraDetection";
 
 const features = [
   { icon: Brain, title: "AI-Powered Detection", description: "Computer vision classifies waste types with 97%+ accuracy in real-time." },
@@ -36,7 +37,8 @@ export default function HomePage() {
               EcoSort AI uses computer vision and IoT sensors to automatically detect, classify, and manage waste — making cities cleaner and greener.
             </p>
             <div className="flex flex-wrap gap-3 mt-8 justify-center lg:justify-start">
-              <Button asChild size="lg" className="gradient-eco border-0 text-primary-foreground shadow-elevated">
+              <CameraDetection />
+              <Button asChild size="lg" className="btn-glow-outline">
                 <Link to="/dashboard">Open Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
               <Button asChild variant="outline" size="lg">
@@ -80,7 +82,7 @@ export default function HomePage() {
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
-                className="bg-card rounded-xl p-6 shadow-card border text-center"
+                className="bg-card rounded-xl p-6 shadow-card border text-center hover:shadow-elevated transition-shadow"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * i }}
@@ -92,6 +94,24 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground mt-2">{f.description}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Actions */}
+      <section className="px-6 py-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-display font-bold text-center mb-8">Quick Actions</h2>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base">
+              <Link to="/monitoring"><Trash2 className="mr-2 h-5 w-5" /> Monitor Bins</Link>
+            </Button>
+            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base">
+              <Link to="/analytics"><BarChart3 className="mr-2 h-5 w-5" /> View Analytics</Link>
+            </Button>
+            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base">
+              <Link to="/map"><Eye className="mr-2 h-5 w-5" /> Smart Map</Link>
+            </Button>
           </div>
         </div>
       </section>

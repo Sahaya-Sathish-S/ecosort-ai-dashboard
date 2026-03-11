@@ -1,11 +1,32 @@
+import { useEffect, useState } from "react";
 import { Trash2, Recycle, TrendingUp, Thermometer } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { FillLevelBar } from "@/components/FillLevelBar";
 import { StatusBadge } from "@/components/StatusBadge";
-import { wasteBins, wasteDistribution, dailyCollection } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { wasteDistribution, dailyCollection } from "@/lib/mockData";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function DashboardPage() {
+  const [bins, setBins] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBins = async () => {
+      const { data } = await supabase.from("waste_bins").select("*").order("bin_id");
+      if (data) setBins(data);
+    };
+    fetchBins();
+
+    const channel = supabase.channel("bins-realtime").on("postgres_changes", { event: "*", schema: "public", table: "waste_bins" }, () => {
+      fetchBins();
+    }).subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const totalBins = bins.length;
+  const avgTemp = bins.length ? Math.round(bins.reduce((a, b) => a + (b.temperature || 0), 0) / bins.length) : 0;
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -13,15 +34,13 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground">Real-time waste management overview</p>
       </div>
 
-      {/* Stats */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Waste Collected" value="2,450 kg" icon={<Trash2 className="h-5 w-5" />} trend={{ value: 12, positive: true }} />
         <StatCard title="Recycling Rate" value="87%" icon={<Recycle className="h-5 w-5" />} trend={{ value: 5, positive: true }} />
-        <StatCard title="Active Bins" value="156" icon={<TrendingUp className="h-5 w-5" />} subtitle="8 bins online" />
-        <StatCard title="Avg Temperature" value="29°C" icon={<Thermometer className="h-5 w-5" />} subtitle="Normal range" />
+        <StatCard title="Active Bins" value={String(totalBins)} icon={<TrendingUp className="h-5 w-5" />} subtitle={`${totalBins} bins online`} />
+        <StatCard title="Avg Temperature" value={`${avgTemp}°C`} icon={<Thermometer className="h-5 w-5" />} subtitle="Normal range" />
       </div>
 
-      {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-xl p-5 shadow-card border">
           <h3 className="font-display font-semibold mb-4">Waste Type Distribution</h3>
@@ -58,20 +77,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Bin Fill Levels */}
       <div className="bg-card rounded-xl p-5 shadow-card border">
         <h3 className="font-display font-semibold mb-4">Smart Bin Fill Levels</h3>
-        <div className="space-y-3">
-          {wasteBins.slice(0, 5).map((bin) => (
-            <div key={bin.id} className="flex items-center gap-4">
-              <span className="text-xs font-medium w-16 text-muted-foreground">{bin.id}</span>
-              <div className="flex-1">
-                <FillLevelBar level={bin.fillLevel} />
+        {bins.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No bins configured yet. Admin can add bins from the Admin Panel.</p>
+        ) : (
+          <div className="space-y-3">
+            {bins.slice(0, 5).map((bin) => (
+              <div key={bin.id} className="flex items-center gap-4">
+                <span className="text-xs font-medium w-16 text-muted-foreground">{bin.bin_id}</span>
+                <div className="flex-1">
+                  <FillLevelBar level={bin.fill_level} />
+                </div>
+                <StatusBadge status={bin.status as "Full" | "Medium" | "Empty"} />
               </div>
-              <StatusBadge status={bin.status} />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
