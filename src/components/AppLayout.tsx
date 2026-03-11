@@ -1,11 +1,18 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Bell } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { Link } from "react-router-dom";
-import { notifications } from "@/lib/mockData";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const { user, isAdmin, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out successfully");
+  };
 
   return (
     <SidebarProvider>
@@ -19,14 +26,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 Smart Waste Management System
               </span>
             </div>
-            <Link to="/notifications" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-medium">
-                  {unreadCount}
-                </span>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">ADMIN</span>
               )}
-            </Link>
+              <span className="text-xs text-muted-foreground hidden sm:block">{user?.email}</span>
+              <Link to="/notifications" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+                <Bell className="h-5 w-5 text-muted-foreground" />
+              </Link>
+              <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign out">
+                <LogOut className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </div>
           </header>
           <main className="flex-1 overflow-auto">{children}</main>
         </div>

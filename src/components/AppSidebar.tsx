@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -22,14 +23,16 @@ const mainItems = [
 const systemItems = [
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Awareness", url: "/awareness", icon: Leaf },
-  { title: "Admin Panel", url: "/admin", icon: Settings },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { isAdmin } = useAuth();
   const isActive = (path: string) => location.pathname === path;
+
+  const adminItems = isAdmin ? [{ title: "Admin Panel", url: "/admin", icon: Settings }] : [];
 
   return (
     <Sidebar collapsible="icon">
@@ -70,7 +73,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {systemItems.map((item) => (
+              {[...systemItems, ...adminItems].map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink to={item.url} activeClassName="bg-sidebar-accent text-sidebar-primary">
