@@ -41,6 +41,41 @@ export type Database = {
         }
         Relationships: []
       }
+      green_credits: {
+        Row: {
+          created_at: string
+          credits: number
+          detection_id: string | null
+          id: string
+          user_id: string
+          waste_type: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          detection_id?: string | null
+          id?: string
+          user_id: string
+          waste_type: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          detection_id?: string | null
+          id?: string
+          user_id?: string
+          waste_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "green_credits_detection_id_fkey"
+            columns: ["detection_id"]
+            isOneToOne: false
+            referencedRelation: "detection_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -157,7 +192,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leaderboard: {
+        Row: {
+          full_name: string | null
+          rank: number | null
+          total_credits: number | null
+          total_disposals: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
