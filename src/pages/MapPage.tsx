@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin } from "lucide-react";
+import { MapPin, Cpu } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FillLevelBar } from "@/components/FillLevelBar";
 
@@ -41,9 +41,15 @@ export default function MapPage() {
             backgroundImage: "radial-gradient(circle, hsl(152 60% 36%) 1px, transparent 1px)",
             backgroundSize: "30px 30px"
           }} />
-          
+
           {bins.length === 0 ? (
-            <p className="text-muted-foreground">No bins to display. Admin can add bins.</p>
+            <div className="text-center space-y-3 relative z-10">
+              <Cpu className="h-10 w-10 text-primary/30 mx-auto" />
+              <p className="font-display font-semibold">No Bins on Map</p>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Smart bins with GPS modules will appear here once hardware is connected and configured by the administrator.
+              </p>
+            </div>
           ) : (
             <div className="relative w-full h-full">
               {bins.map((bin, i) => {
@@ -73,22 +79,6 @@ export default function MapPage() {
           )}
         </div>
       </div>
-
-      {bins.length > 0 && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {bins.map((bin) => (
-            <div key={bin.id} className="bg-card rounded-lg p-3 shadow-card border flex items-center gap-3">
-              <div className={`h-3 w-3 rounded-full flex-shrink-0 ${
-                bin.status === "Full" ? "bg-destructive" : bin.status === "Medium" ? "bg-warning" : "bg-success"
-              }`} />
-              <div className="min-w-0">
-                <p className="text-xs font-medium truncate">{bin.bin_id} — {bin.location}</p>
-                <p className="text-[11px] text-muted-foreground">{bin.fill_level}% full</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
