@@ -25,7 +25,8 @@ export default function LoginPage() {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Account created! Please check your email to verify, then sign in.");
+        toast.success("Account created successfully! You can now sign in.");
+        setMode("login");
       }
     } else {
       const { error } = await signIn(email, password);
@@ -93,7 +94,7 @@ export default function LoginPage() {
 
           <div className="flex items-center justify-between mt-5">
             <p className="text-xs text-white/30">
-              {mode === "login" ? "Don't have an account? Sign up above." : "Verify email before signing in."}
+              {mode === "login" ? "Don't have an account? Sign up above." : "Already have an account? Sign in above."}
             </p>
             <Link to="/admin-login" className="text-xs text-white/30 hover:text-white/50 flex items-center gap-1 transition-colors">
               <Shield className="h-3 w-3" /> Admin

@@ -24,12 +24,38 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a waste classification AI. Analyze the image and classify the waste type. Respond ONLY by calling the classify_waste function.`,
+            content: `You are an expert waste classification AI with extensive training data. Analyze the image carefully and classify the PRIMARY waste type visible.
+
+CLASSIFICATION RULES:
+1. Focus on the MAIN waste item, not background objects
+2. If multiple waste items are visible, classify the most prominent one
+3. Common items and their categories:
+   - PLASTIC: bottles, bags, containers, packaging, straws, cups, wrappers, food containers, PET bottles, HDPE containers, polystyrene, bubble wrap
+   - PAPER: newspapers, cardboard, books, envelopes, paper bags, tissues, paper plates, magazines, office paper, paper towels
+   - METAL: cans, foil, wires, nails, screws, metal lids, aluminum cans, tin cans, steel containers, copper wire
+   - ORGANIC: food scraps, fruit peels, vegetable waste, leaves, garden waste, coffee grounds, eggshells, tea bags, flowers, wood chips
+   - GLASS: bottles, jars, mirrors, window glass, drinking glasses, glass containers, broken glass
+   - E-WASTE: phones, chargers, cables, batteries, circuit boards, keyboards, mice, headphones, old computers, tablets, TVs, monitors, printers, USB drives
+   - HAZARDOUS: chemicals, paint, medical waste, syringes, pesticides, cleaning products, motor oil, light bulbs (CFL/fluorescent), aerosol cans
+   - MIXED: when multiple distinct waste types are equally visible and cannot be separated
+
+4. IMPORTANT DISTINCTIONS:
+   - A phone/tablet/laptop is E-WASTE, not Metal or Plastic
+   - A plastic bottle with liquid inside is still Plastic
+   - Food in a container: if mostly food → Organic, if mostly container → Plastic/Paper
+   - Cardboard boxes are Paper, not Mixed
+   - Aluminum cans are Metal, not Plastic
+   - Clothes/textiles should be classified as Mixed
+   - Batteries are ALWAYS Hazardous, even small ones
+
+5. If NO waste item is visible (e.g., just a person, furniture, landscape), return "No Waste"
+
+Respond ONLY by calling the classify_waste function.`,
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "Analyze this image and classify the waste type shown. If no waste is visible, say 'No Waste'." },
+              { type: "text", text: "Analyze this image and classify the waste type. Focus on the primary waste item visible. If you see a phone, laptop, or electronic device, classify it as E-Waste. If you see no waste, say 'No Waste'." },
               { type: "image_url", image_url: { url: image } },
             ],
           },
@@ -39,13 +65,14 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "classify_waste",
-              description: "Classify waste from image",
+              description: "Classify waste from image with detailed analysis",
               parameters: {
                 type: "object",
                 properties: {
                   wasteType: {
                     type: "string",
-                    description: "The type of waste detected (e.g., Plastic, Paper, Metal, Organic, Glass, E-Waste, Hazardous, Mixed, No Waste)",
+                    enum: ["Plastic", "Paper", "Metal", "Organic", "Glass", "E-Waste", "Hazardous", "Mixed", "No Waste"],
+                    description: "The type of waste detected",
                   },
                   confidence: {
                     type: "number",
@@ -53,7 +80,7 @@ serve(async (req) => {
                   },
                   description: {
                     type: "string",
-                    description: "Brief description of what was detected and recycling advice",
+                    description: "Brief description: what specific item was detected, why it's classified this way, and recycling advice (1-2 sentences)",
                   },
                 },
                 required: ["wasteType", "confidence", "description"],

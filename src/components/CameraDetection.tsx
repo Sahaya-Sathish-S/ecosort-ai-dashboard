@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from "react";
-import { Camera, X, Loader2, Scan, Volume2, VolumeX, Coins } from "lucide-react";
+import { Camera, X, Loader2, Scan, Volume2, VolumeX, Coins, Globe, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
 
 interface DetectionResult {
   wasteType: string;
@@ -11,33 +12,40 @@ interface DetectionResult {
   description: string;
 }
 
+type Lang = "en" | "hi" | "ta";
+const LANG_LABELS: Record<Lang, string> = { en: "English", hi: "हिन्दी", ta: "தமிழ்" };
+
 const CREDIT_MAP: Record<string, number> = {
-  Plastic: 10,
-  Paper: 8,
-  Metal: 15,
-  Organic: 5,
-  Glass: 12,
-  "E-Waste": 20,
+  Plastic: 10, Paper: 8, Metal: 15, Organic: 5, Glass: 12, "E-Waste": 20, Hazardous: 25,
 };
 
-function speakResult(result: DetectionResult, credits: number) {
+function speakResult(result: DetectionResult, credits: number, lang: Lang) {
   if (!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
 
   let text: string;
-  if (result.wasteType === "No Waste") {
-    text = "No waste was detected in the image. Please try scanning again with a waste item visible.";
+  if (lang === "hi") {
+    text = result.wasteType === "No Waste"
+      ? "छवि में कोई कचरा नहीं मिला। कृपया कचरे की वस्तु के साथ पुनः स्कैन करें।"
+      : `${result.wasteType} कचरा पाया गया, ${result.confidence} प्रतिशत विश्वसनीयता। ${result.description}। आपने ${credits} ग्रीन क्रेडिट अर्जित किए!`;
+  } else if (lang === "ta") {
+    text = result.wasteType === "No Waste"
+      ? "படத்தில் கழிவுகள் கண்டறியப்படவில்லை. கழிவுப் பொருளுடன் மீண்டும் ஸ்கேன் செய்யவும்."
+      : `${result.wasteType} கழிவு கண்டறியப்பட்டது, ${result.confidence} சதவீத நம்பகத்தன்மை. ${result.description}. நீங்கள் ${credits} பசுமை கிரெடிட்களை பெற்றீர்கள்!`;
   } else {
-    text = `Detected ${result.wasteType} waste with ${result.confidence}% confidence. ${result.description}. You earned ${credits} green credits for this disposal!`;
+    text = result.wasteType === "No Waste"
+      ? "No waste was detected. Please try scanning again with a waste item visible."
+      : `Detected ${result.wasteType} waste with ${result.confidence}% confidence. ${result.description}. You earned ${credits} green credits!`;
   }
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 0.95;
-  utterance.pitch = 1.05;
   utterance.volume = 1;
+  const langCode = lang === "hi" ? "hi-IN" : lang === "ta" ? "ta-IN" : "en-US";
+  utterance.lang = langCode;
   const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find((v) => v.lang.startsWith("en") && v.name.includes("Google")) || voices.find((v) => v.lang.startsWith("en"));
-  if (preferred) utterance.voice = preferred;
+  const match = voices.find((v) => v.lang.startsWith(langCode.split("-")[0]));
+  if (match) utterance.voice = match;
   window.speechSynthesis.speak(utterance);
 }
 
@@ -49,6 +57,8 @@ export function CameraDetection() {
   const [earnedCredits, setEarnedCredits] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [lang, setLang] = useState<Lang>("en");
+  const [qrData, setQrData] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { user } = useAuth();
@@ -62,6 +72,7 @@ export function CameraDetection() {
       setCapturing(true);
       setResult(null);
       setEarnedCredits(0);
+      setQrData(null);
       setIsOpen(true);
       setTimeout(() => {
         if (videoRef.current) videoRef.current.srcObject = mediaStream;
@@ -79,6 +90,7 @@ export function CameraDetection() {
     setIsOpen(false);
     setResult(null);
     setEarnedCredits(0);
+    setQrData(null);
   }, [stream]);
 
   const captureAndAnalyze = useCallback(async () => {
@@ -107,17 +119,15 @@ export function CameraDetection() {
       const credits = detection.wasteType !== "No Waste" ? (CREDIT_MAP[detection.wasteType] || 7) : 0;
       setEarnedCredits(credits);
 
-      if (voiceEnabled) speakResult(detection, credits);
+      if (voiceEnabled) speakResult(detection, credits, lang);
 
-      if (user) {
-        // Save detection
+      if (user && detection.wasteType !== "No Waste") {
         const { data: detectionRow } = await supabase.from("detection_history").insert({
           user_id: user.id,
           waste_type: detection.wasteType,
           confidence: detection.confidence,
         }).select("id").single();
 
-        // Award green credits
         if (credits > 0) {
           await supabase.from("green_credits").insert({
             user_id: user.id,
@@ -126,6 +136,16 @@ export function CameraDetection() {
             detection_id: detectionRow?.id || null,
           });
           toast.success(`+${credits} Green Credits earned! 🌱`);
+
+          // Generate QR code data for leaderboard points
+          const qrPayload = JSON.stringify({
+            userId: user.id,
+            credits,
+            wasteType: detection.wasteType,
+            detectionId: detectionRow?.id,
+            timestamp: Date.now(),
+          });
+          setQrData(btoa(qrPayload));
         }
       }
     } catch (err: any) {
@@ -133,7 +153,7 @@ export function CameraDetection() {
     } finally {
       setAnalyzing(false);
     }
-  }, [user, voiceEnabled]);
+  }, [user, voiceEnabled, lang]);
 
   if (!isOpen) {
     return (
@@ -153,7 +173,17 @@ export function CameraDetection() {
             AI Waste Scanner
           </h3>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) window.speechSynthesis?.cancel(); }} title={voiceEnabled ? "Mute voice" : "Enable voice"}>
+            {/* Language selector */}
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang)}
+              className="text-xs bg-transparent border border-border rounded-md px-1.5 py-1 text-foreground"
+            >
+              {Object.entries(LANG_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+            <Button variant="ghost" size="icon" onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) window.speechSynthesis?.cancel(); }}>
               {voiceEnabled ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
             </Button>
             <Button variant="ghost" size="icon" onClick={stopCamera}><X className="h-4 w-4" /></Button>
@@ -193,11 +223,23 @@ export function CameraDetection() {
               </div>
             )}
 
-            {voiceEnabled && (
-              <p className="text-xs text-primary flex items-center gap-1">
-                <Volume2 className="h-3 w-3" /> Voice reading enabled
-              </p>
+            {/* QR Code for leaderboard */}
+            {qrData && (
+              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-b from-primary/5 to-accent/5 border border-primary/10">
+                <div className="flex items-center gap-2 text-sm font-display font-semibold text-primary">
+                  <QrCode className="h-4 w-4" /> Your Reward QR Code
+                </div>
+                <QRCodeSVG value={qrData} size={140} bgColor="transparent" fgColor="hsl(152, 60%, 36%)" level="M" />
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Show this QR code at any EcoSort collection point to claim bonus points!
+                </p>
+              </div>
             )}
+
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Globe className="h-3 w-3" /> Voice: {LANG_LABELS[lang]}
+              {voiceEnabled && <Volume2 className="h-3 w-3 text-primary ml-1" />}
+            </p>
           </div>
         )}
 

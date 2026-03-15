@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ChatBotWidget } from "@/components/ChatBot";
 import AppLayout from "@/components/AppLayout";
 import HomePage from "@/pages/HomePage";
 import LoginPage from "@/pages/LoginPage";
@@ -18,6 +19,7 @@ import NotificationsPage from "@/pages/NotificationsPage";
 import AwarenessPage from "@/pages/AwarenessPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import AdminPage from "@/pages/AdminPage";
+import { ChatPage } from "@/components/ChatBot";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,9 +47,11 @@ const App = () => (
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/awareness" element={<AwarenessPage />} />
                     <Route path="/leaderboard" element={<LeaderboardPage />} />
+                    <Route path="/chat" element={<ChatPage />} />
                     <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
+                  <ChatBotWidget />
                 </AppLayout>
               </ProtectedRoute>
             } />
