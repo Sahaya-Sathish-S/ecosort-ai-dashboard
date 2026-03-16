@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import ecosortLogo from "@/assets/ecosort-logo.png";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -33,14 +34,12 @@ export default function AdminLoginPage() {
     }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="h-18 w-18 rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ width: 72, height: 72 }}>
-            <Shield className="h-9 w-9 text-white" />
-          </div>
+          <img src={ecosortLogo} alt="EcoSort AI" className="h-20 w-20 mx-auto mb-4 drop-shadow-lg" />
           <h1 className="text-3xl font-display font-bold text-white">Admin Access</h1>
           <p className="text-sm mt-1 text-white/50">EcoSort AI — Restricted Area</p>
         </div>
 
-        <div className="rounded-2xl p-8 border border-white/10 shadow-2xl" style={{
+        <div className="rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur" style={{
           background: "linear-gradient(180deg, hsl(220 20% 16%), hsl(220 20% 12%))"
         }}>
           <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">

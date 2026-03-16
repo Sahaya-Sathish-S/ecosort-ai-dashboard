@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Camera, X, Loader2, Scan, Volume2, VolumeX, Coins, Globe, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,12 @@ const LANG_LABELS: Record<Lang, string> = { en: "English", hi: "हिन्द�
 const CREDIT_MAP: Record<string, number> = {
   Plastic: 10, Paper: 8, Metal: 15, Organic: 5, Glass: 12, "E-Waste": 20, Hazardous: 25,
 };
+
+// Preload voices
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
 
 function speakResult(result: DetectionResult, credits: number, lang: Lang) {
   if (!("speechSynthesis" in window)) return;
@@ -39,13 +45,19 @@ function speakResult(result: DetectionResult, credits: number, lang: Lang) {
   }
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.95;
+  utterance.rate = 0.9;
   utterance.volume = 1;
+  utterance.pitch = 1;
   const langCode = lang === "hi" ? "hi-IN" : lang === "ta" ? "ta-IN" : "en-US";
   utterance.lang = langCode;
+  
+  // Wait briefly for voices to load, then find match
   const voices = window.speechSynthesis.getVoices();
-  const match = voices.find((v) => v.lang.startsWith(langCode.split("-")[0]));
-  if (match) utterance.voice = match;
+  const exactMatch = voices.find((v) => v.lang === langCode);
+  const partialMatch = voices.find((v) => v.lang.startsWith(langCode.split("-")[0]));
+  if (exactMatch) utterance.voice = exactMatch;
+  else if (partialMatch) utterance.voice = partialMatch;
+  
   window.speechSynthesis.speak(utterance);
 }
 
@@ -137,7 +149,6 @@ export function CameraDetection() {
           });
           toast.success(`+${credits} Green Credits earned! 🌱`);
 
-          // Generate QR code data for leaderboard points
           const qrPayload = JSON.stringify({
             userId: user.id,
             credits,
@@ -147,6 +158,12 @@ export function CameraDetection() {
           });
           setQrData(btoa(qrPayload));
         }
+
+        // Create notification for the detection
+        await supabase.from("notifications").insert({
+          type: "detection",
+          message: `AI detected ${detection.wasteType} waste (${detection.confidence}% confidence). +${credits} green credits earned!`,
+        });
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to analyze waste");
@@ -157,7 +174,7 @@ export function CameraDetection() {
 
   if (!isOpen) {
     return (
-      <Button onClick={startCamera} size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground gap-2">
+      <Button onClick={startCamera} size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground gap-2 hover:scale-105 transition-transform">
         <Camera className="h-5 w-5" />
         Scan Waste with AI
       </Button>
@@ -166,27 +183,26 @@ export function CameraDetection() {
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl shadow-elevated border max-w-lg w-full overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-display font-semibold flex items-center gap-2">
-            <Scan className="h-4 w-4 text-primary" />
+      <div className="bg-card rounded-2xl shadow-elevated border max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between p-4 border-b gradient-eco">
+          <h3 className="font-display font-semibold flex items-center gap-2 text-primary-foreground">
+            <Scan className="h-4 w-4" />
             AI Waste Scanner
           </h3>
           <div className="flex items-center gap-1">
-            {/* Language selector */}
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value as Lang)}
-              className="text-xs bg-transparent border border-border rounded-md px-1.5 py-1 text-foreground"
+              className="text-xs bg-primary-foreground/20 backdrop-blur border-0 rounded-lg px-2 py-1 text-primary-foreground font-medium cursor-pointer"
             >
               {Object.entries(LANG_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
+                <option key={k} value={k} className="text-foreground bg-card">{v}</option>
               ))}
             </select>
-            <Button variant="ghost" size="icon" onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) window.speechSynthesis?.cancel(); }}>
-              {voiceEnabled ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20" onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) window.speechSynthesis?.cancel(); }}>
+              {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={stopCamera}><X className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/20" onClick={stopCamera}><X className="h-4 w-4" /></Button>
           </div>
         </div>
 
@@ -194,9 +210,12 @@ export function CameraDetection() {
           {capturing && <video ref={videoRef} autoPlay playsInline muted className="w-full aspect-[4/3] object-cover" />}
           <canvas ref={canvasRef} className="hidden" />
           {analyzing && (
-            <div className="absolute inset-0 bg-background/80 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm font-medium">AI is analyzing...</p>
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+              <div className="h-16 w-16 rounded-2xl gradient-eco flex items-center justify-center animate-pulse">
+                <Loader2 className="h-8 w-8 animate-spin text-primary-foreground" />
+              </div>
+              <p className="text-sm font-display font-semibold">AI is analyzing...</p>
+              <p className="text-xs text-muted-foreground">Classifying waste type</p>
             </div>
           )}
         </div>
@@ -204,7 +223,7 @@ export function CameraDetection() {
         {result && (
           <div className="p-5 space-y-3 border-t">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl gradient-eco flex items-center justify-center shadow-md">
                 <span className="text-2xl">{result.wasteType === "No Waste" ? "❌" : "♻️"}</span>
               </div>
               <div>
@@ -217,13 +236,12 @@ export function CameraDetection() {
             <p className="text-sm text-muted-foreground">{result.description}</p>
 
             {earnedCredits > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20">
-                <Coins className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm font-semibold text-yellow-700">+{earnedCredits} Green Credits Earned!</span>
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 animate-in fade-in duration-500">
+                <Coins className="h-5 w-5 text-yellow-600" />
+                <span className="text-sm font-bold text-yellow-700">+{earnedCredits} Green Credits Earned!</span>
               </div>
             )}
 
-            {/* QR Code for leaderboard */}
             {qrData && (
               <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-b from-primary/5 to-accent/5 border border-primary/10">
                 <div className="flex items-center gap-2 text-sm font-display font-semibold text-primary">
@@ -244,11 +262,11 @@ export function CameraDetection() {
         )}
 
         <div className="p-4 border-t flex gap-2">
-          <Button onClick={captureAndAnalyze} disabled={analyzing} className="flex-1 btn-glow gradient-eco border-0 text-primary-foreground">
+          <Button onClick={captureAndAnalyze} disabled={analyzing} className="flex-1 btn-glow gradient-eco border-0 text-primary-foreground hover:scale-[1.02] transition-transform">
             {analyzing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
             {result ? "Scan Again" : "Capture & Analyze"}
           </Button>
-          <Button variant="outline" onClick={stopCamera}>Close</Button>
+          <Button variant="outline" onClick={stopCamera} className="hover:border-primary/30 hover:text-primary transition-colors">Close</Button>
         </div>
       </div>
     </div>
