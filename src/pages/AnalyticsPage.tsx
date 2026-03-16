@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { StatCard } from "@/components/StatCard";
-import { Leaf, Recycle, TrendingUp, TreePine } from "lucide-react";
+import { Leaf, Recycle, TrendingUp, TreePine, Cpu } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [bins, setBins] = useState<any[]>([]);
@@ -24,14 +24,12 @@ export default function AnalyticsPage() {
   const fullBins = bins.filter((b) => b.status === "Full").length;
   const recyclingRate = totalBins > 0 ? Math.round(((totalBins - fullBins) / totalBins) * 100) : 0;
 
-  // Detection type breakdown
   const typeBreakdown: Record<string, number> = {};
   detections.forEach((d) => {
     typeBreakdown[d.waste_type] = (typeBreakdown[d.waste_type] || 0) + 1;
   });
   const typeData = Object.entries(typeBreakdown).map(([name, count]) => ({ name, count }));
 
-  // Detections per day (last 7 days)
   const dailyMap: Record<string, number> = {};
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -50,18 +48,8 @@ export default function AnalyticsPage() {
   });
   const dailyData = Object.entries(dailyMap).map(([day, scans]) => ({ day, scans }));
 
-  // Waste type bar data from bins
-  const binTypeMap: Record<string, number> = {};
-  bins.forEach((b) => {
-    binTypeMap[b.waste_type] = (binTypeMap[b.waste_type] || 0) + 1;
-  });
-  const binTypeData = Object.entries(binTypeMap).map(([name, count]) => ({ name, count }));
-
-  const wasteColors: Record<string, string> = {
-    Plastic: "hsl(200, 80%, 50%)", Paper: "hsl(38, 92%, 50%)",
-    Metal: "hsl(260, 60%, 55%)", Organic: "hsl(152, 60%, 36%)",
-    Mixed: "hsl(220, 50%, 55%)", Glass: "hsl(180, 50%, 45%)",
-  };
+  const hasBinData = totalBins > 0;
+  const hasDetections = detections.length > 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -71,10 +59,10 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Bins" value={String(totalBins)} icon={<TrendingUp className="h-5 w-5" />} subtitle="Active smart bins" />
-        <StatCard title="Recycling Efficiency" value={`${recyclingRate}%`} icon={<Recycle className="h-5 w-5" />} subtitle="Based on bin status" />
-        <StatCard title="AI Scans" value={String(detections.length)} icon={<Leaf className="h-5 w-5" />} subtitle="Total detections" />
-        <StatCard title="Waste Types" value={String(Object.keys(typeBreakdown).length)} icon={<TreePine className="h-5 w-5" />} subtitle="Unique types detected" />
+        <StatCard title="Total Bins" value={hasBinData ? String(totalBins) : "—"} icon={<TrendingUp className="h-5 w-5" />} subtitle={hasBinData ? "Active smart bins" : "Awaiting hardware"} />
+        <StatCard title="Recycling Efficiency" value={hasBinData ? `${recyclingRate}%` : "—"} icon={<Recycle className="h-5 w-5" />} subtitle={hasBinData ? "Based on bin status" : "Awaiting hardware"} />
+        <StatCard title="AI Scans" value={hasDetections ? String(detections.length) : "—"} icon={<Leaf className="h-5 w-5" />} subtitle={hasDetections ? "Total detections" : "No scans yet"} />
+        <StatCard title="Waste Types" value={hasDetections ? String(Object.keys(typeBreakdown).length) : "—"} icon={<TreePine className="h-5 w-5" />} subtitle={hasDetections ? "Unique types detected" : "No data yet"} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -92,7 +80,11 @@ export default function AnalyticsPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-muted-foreground text-center pt-20">No scan data in the last 7 days.</p>
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <Cpu className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">No scan data in the last 7 days</p>
+                <p className="text-xs text-muted-foreground mt-1">Use the AI scanner to generate data</p>
+              </div>
             )}
           </div>
         </div>
@@ -107,39 +99,18 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="hsl(200, 80%, 50%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="hsl(152, 60%, 36%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-muted-foreground text-center pt-20">No detection data yet.</p>
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <Cpu className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">No detection data yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Scan waste items to see breakdown</p>
+              </div>
             )}
           </div>
         </div>
-      </div>
-
-      <div className="bg-card rounded-xl p-5 shadow-card border">
-        <h3 className="font-display font-semibold mb-4">Bin Waste Type Distribution</h3>
-        {binTypeData.length > 0 ? (
-          <div className="space-y-3">
-            {binTypeData.map((w) => (
-              <div key={w.name} className="flex items-center gap-3">
-                <span className="w-16 text-sm font-medium">{w.name}</span>
-                <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${Math.round((w.count / totalBins) * 100)}%`,
-                      backgroundColor: wasteColors[w.name] || "hsl(0,0%,60%)",
-                    }}
-                  />
-                </div>
-                <span className="text-sm font-medium w-10 text-right">{w.count}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No bins configured yet.</p>
-        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Leaf, LogIn, UserPlus, Shield } from "lucide-react";
 import { toast } from "sonner";
+import ecosortLogo from "@/assets/ecosort-logo.png";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -25,7 +26,7 @@ export default function LoginPage() {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Account created successfully! You can now sign in.");
+        toast.success("Account created! You can now sign in.");
         setMode("login");
       }
     } else {
@@ -33,8 +34,8 @@ export default function LoginPage() {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Welcome back!");
-        navigate("/dashboard");
+        toast.success("Welcome back! 🌱");
+        navigate("/");
       }
     }
     setLoading(false);
@@ -46,14 +47,12 @@ export default function LoginPage() {
     }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="h-16 w-16 rounded-2xl gradient-eco flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/30">
-            <Leaf className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <img src={ecosortLogo} alt="EcoSort AI" className="h-20 w-20 mx-auto mb-4 drop-shadow-lg" />
           <h1 className="text-3xl font-display font-bold text-white">EcoSort AI</h1>
           <p className="text-sm mt-1 text-white/50">Smart Waste Management System</p>
         </div>
 
-        <div className="rounded-2xl p-8 border border-white/10 shadow-2xl" style={{
+        <div className="rounded-2xl p-8 border border-white/10 shadow-2xl backdrop-blur" style={{
           background: "linear-gradient(180deg, hsl(152 15% 14%), hsl(152 10% 10%))"
         }}>
           <div className="flex gap-1 bg-white/5 rounded-xl p-1 mb-6">
@@ -75,16 +74,16 @@ export default function LoginPage() {
             {mode === "signup" && (
               <div>
                 <Label className="text-white/70">Full Name</Label>
-                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30" required />
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-primary/50" required />
               </div>
             )}
             <div>
               <Label className="text-white/70">Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30" required />
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-primary/50" required />
             </div>
             <div>
               <Label className="text-white/70">Password</Label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30" required minLength={6} />
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-primary/50" required minLength={6} />
             </div>
 
             <Button type="submit" disabled={loading} className="w-full btn-glow gradient-eco border-0 text-primary-foreground h-12 text-base font-semibold">

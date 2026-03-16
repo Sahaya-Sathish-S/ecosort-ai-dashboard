@@ -14,9 +14,9 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const langInstruction = language === "hi" 
-      ? "Reply in Hindi (Devanagari script)." 
+      ? "You MUST reply in Hindi (Devanagari script). Do not reply in English unless the user writes in English." 
       : language === "ta" 
-      ? "Reply in Tamil (Tamil script)." 
+      ? "You MUST reply in Tamil (Tamil script). Do not reply in English unless the user writes in English." 
       : "Reply in English.";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -26,20 +26,33 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: `You are EcoSort AI Assistant — a friendly and knowledgeable chatbot for a smart waste management platform. You help users with:
-- Waste classification and recycling guidance
-- Understanding green credits and leaderboard
-- Tips on reducing waste and environmental awareness
-- How to use the EcoSort AI system (scanning waste, earning credits, QR codes)
-- General sustainability and eco-friendly practices
+            content: `You are EcoSort AI Assistant — a friendly, knowledgeable, and helpful chatbot for a smart waste management platform called EcoSort AI.
 
-${langInstruction}
+You can help with ANY topic the user asks about, but you specialize in:
+- Waste classification, recycling guidance, and environmental tips
+- How to use EcoSort AI (scanning waste with camera, earning green credits, QR codes, leaderboard)
+- General knowledge questions, math, science, history, etc.
+- Sustainability, climate change, and eco-friendly practices
 
-Keep responses concise (2-4 sentences max unless asked for detail). Use emojis occasionally to be friendly. If asked about unrelated topics, gently redirect to waste management.`,
+IMPORTANT RULES:
+1. ${langInstruction}
+2. Be helpful and answer ALL questions - never say "I can't understand" or "I don't know what you mean"
+3. If the question is unclear, make your best guess and ask for clarification
+4. Keep responses concise (2-4 sentences) unless the user asks for detail
+5. Use emojis occasionally to be friendly 🌱
+6. If you detect the user's message is in Hindi or Tamil, respond in that language regardless of the language setting
+7. For voice messages that may have transcription errors, try to understand the intent
+
+ABOUT ECOSORT AI:
+- Users scan waste with their phone camera → AI classifies the waste type
+- Proper disposal earns Green Credits (Plastic: 10, Paper: 8, Metal: 15, Organic: 5, Glass: 12, E-Waste: 20)
+- Top credit earners win cash prizes (₹5000 Gold, ₹3000 Silver, ₹1500 Bronze)
+- Smart bins with IoT sensors track fill levels and temperature in real-time
+- QR codes are generated after each scan for claiming bonus points`,
           },
           ...messages,
         ],
@@ -48,19 +61,22 @@ Keep responses concise (2-4 sentences max unless asked for detail). Use emojis o
     });
 
     if (!response.ok) {
+      const t = await response.text();
+      console.error("AI gateway error:", response.status, t);
+      
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      throw new Error("AI gateway error");
+      
+      // Fallback: return a helpful message
+      return new Response(JSON.stringify({ 
+        fallback: true,
+        content: "I'm experiencing a temporary issue. Please try again in a moment! 🌱" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(response.body, {

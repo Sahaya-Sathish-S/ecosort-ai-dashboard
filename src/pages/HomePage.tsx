@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import { Brain, BarChart3, Trash2, Leaf, ArrowRight, Zap, Eye, Recycle, Trophy, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CameraDetection } from "@/components/CameraDetection";
+import ecosortLogo from "@/assets/ecosort-logo.png";
 
 const features = [
-  { icon: Brain, title: "AI-Powered Detection", description: "Computer vision classifies waste types with real AI analysis in real-time.", color: "from-blue-500/20 to-cyan-500/20" },
-  { icon: Eye, title: "Smart Monitoring", description: "IoT sensors track fill levels, temperature, and bin health 24/7.", color: "from-purple-500/20 to-pink-500/20" },
-  { icon: BarChart3, title: "Data Analytics", description: "Actionable insights on waste patterns, recycling rates, and efficiency.", color: "from-orange-500/20 to-amber-500/20" },
-  { icon: Trophy, title: "Green Credits", description: "Earn rewards for proper waste disposal and climb the leaderboard!", color: "from-emerald-500/20 to-green-500/20" },
+  { icon: Brain, title: "AI-Powered Detection", description: "Computer vision classifies waste types with real AI analysis in real-time.", color: "from-blue-500/20 to-cyan-500/20", hoverBorder: "hover:border-blue-500/30" },
+  { icon: Eye, title: "Smart Monitoring", description: "IoT sensors track fill levels, temperature, and bin health 24/7.", color: "from-purple-500/20 to-pink-500/20", hoverBorder: "hover:border-purple-500/30" },
+  { icon: BarChart3, title: "Data Analytics", description: "Actionable insights on waste patterns, recycling rates, and efficiency.", color: "from-orange-500/20 to-amber-500/20", hoverBorder: "hover:border-orange-500/30" },
+  { icon: Trophy, title: "Green Credits", description: "Earn rewards for proper waste disposal and climb the leaderboard!", color: "from-emerald-500/20 to-green-500/20", hoverBorder: "hover:border-emerald-500/30" },
 ];
 
 export default function HomePage() {
@@ -45,7 +46,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-3 mt-8 justify-center lg:justify-start">
               <CameraDetection />
-              <Button asChild size="lg" className="btn-glow-outline">
+              <Button asChild size="lg" className="btn-glow-outline hover:scale-105 transition-transform">
                 <Link to="/dashboard">Open Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
             </div>
@@ -58,10 +59,10 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="relative">
-              <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 absolute -inset-4 blur-3xl" />
-              <div className="relative w-64 h-64 lg:w-80 lg:h-80 rounded-3xl bg-card shadow-elevated border flex items-center justify-center">
+              <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 absolute -inset-4 blur-3xl animate-pulse" style={{ animationDuration: "4s" }} />
+              <div className="relative w-64 h-64 lg:w-80 lg:h-80 rounded-3xl bg-card shadow-elevated border flex items-center justify-center overflow-hidden">
                 <div className="text-center">
-                  <div className="text-7xl lg:text-8xl animate-float">🗑️</div>
+                  <img src={ecosortLogo} alt="EcoSort AI" className="h-32 w-32 mx-auto animate-float object-contain" />
                   <div className="flex items-center justify-center gap-1 mt-4">
                     <Brain className="h-5 w-5 text-primary" />
                     <span className="text-sm font-display font-semibold text-primary">AI Scanning...</span>
@@ -87,7 +88,7 @@ export default function HomePage() {
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
-                className={`rounded-xl p-6 shadow-card border text-center hover:shadow-elevated transition-all bg-gradient-to-br ${f.color}`}
+                className={`rounded-xl p-6 shadow-card border text-center hover:shadow-elevated transition-all duration-300 bg-gradient-to-br ${f.color} ${f.hoverBorder} hover:scale-[1.03] cursor-default`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * i }}
@@ -108,16 +109,16 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-display font-bold text-center mb-8">Quick Actions</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base">
+            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base hover:scale-105 transition-transform">
               <Link to="/monitoring"><Trash2 className="mr-2 h-5 w-5" /> Monitor Bins</Link>
             </Button>
-            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base">
+            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base hover:scale-105 transition-transform">
               <Link to="/analytics"><BarChart3 className="mr-2 h-5 w-5" /> View Analytics</Link>
             </Button>
-            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base">
+            <Button asChild size="lg" className="btn-glow gradient-eco border-0 text-primary-foreground h-14 text-base hover:scale-105 transition-transform">
               <Link to="/map"><Eye className="mr-2 h-5 w-5" /> Smart Map</Link>
             </Button>
-            <Button asChild size="lg" className="h-14 text-base bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 border-0 text-white shadow-lg shadow-yellow-500/25">
+            <Button asChild size="lg" className="h-14 text-base bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 border-0 text-white shadow-lg shadow-yellow-500/25 hover:scale-105 transition-transform">
               <Link to="/leaderboard"><Trophy className="mr-2 h-5 w-5" /> Leaderboard</Link>
             </Button>
           </div>
@@ -127,10 +128,10 @@ export default function HomePage() {
       {/* Hardware Integration Notice */}
       <section className="px-6 py-12">
         <div className="max-w-3xl mx-auto">
-          <div className="rounded-2xl p-6 border border-primary/20 bg-primary/5">
+          <div className="rounded-2xl p-6 border border-primary/20 bg-primary/5 hover:shadow-elevated transition-shadow">
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Cpu className="h-6 w-6 text-primary" />
+              <div className="h-12 w-12 rounded-xl gradient-eco flex items-center justify-center flex-shrink-0 shadow-md">
+                <Cpu className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
                 <h3 className="font-display font-semibold text-lg">Hardware Integration Required</h3>
@@ -140,7 +141,7 @@ export default function HomePage() {
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {["Fill-Level Sensors", "Temperature Sensors", "GPS Modules", "Servo Motors", "ESP32/Arduino"].map((hw) => (
-                    <span key={hw} className="px-2.5 py-1 text-[11px] rounded-full bg-primary/10 text-primary font-medium">{hw}</span>
+                    <span key={hw} className="px-2.5 py-1 text-[11px] rounded-full bg-primary/10 text-primary font-medium border border-primary/20">{hw}</span>
                   ))}
                 </div>
               </div>

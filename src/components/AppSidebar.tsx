@@ -1,6 +1,6 @@
 import {
   Home, LayoutDashboard, Trash2, Brain, BarChart3,
-  Map, Bell, Leaf, Settings, Trophy, MessageCircle,
+  Map, Bell, Leaf, Settings, Trophy, MessageCircle, User,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -10,6 +10,7 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+import ecosortLogo from "@/assets/ecosort-logo.png";
 
 const mainItems = [
   { title: "Home", url: "/", icon: Home },
@@ -25,6 +26,7 @@ const mainItems = [
 const systemItems = [
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Awareness", url: "/awareness", icon: Leaf },
+  { title: "My Profile", url: "/profile", icon: User },
 ];
 
 export function AppSidebar() {
@@ -40,9 +42,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg gradient-eco flex items-center justify-center flex-shrink-0">
-            <Leaf className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src={ecosortLogo} alt="EcoSort AI" className="h-9 w-9 rounded-lg flex-shrink-0 object-contain" />
           {!collapsed && (
             <div>
               <h2 className="text-sm font-display font-bold text-sidebar-foreground">EcoSort AI</h2>

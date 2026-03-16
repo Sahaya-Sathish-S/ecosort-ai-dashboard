@@ -19,6 +19,7 @@ import NotificationsPage from "@/pages/NotificationsPage";
 import AwarenessPage from "@/pages/AwarenessPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import AdminPage from "@/pages/AdminPage";
+import ProfilePage from "@/pages/ProfilePage";
 import { ChatPage } from "@/components/ChatBot";
 import NotFound from "@/pages/NotFound";
 
@@ -48,6 +49,7 @@ const App = () => (
                     <Route path="/awareness" element={<AwarenessPage />} />
                     <Route path="/leaderboard" element={<LeaderboardPage />} />
                     <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
